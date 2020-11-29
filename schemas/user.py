@@ -44,6 +44,7 @@ class UserCreate(BaseModel):
     email: Optional[EmailStr] = None
     phone: str = None
     code: str
+    nickname: str
     password1: str
     password2: str
 

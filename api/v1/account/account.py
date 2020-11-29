@@ -49,13 +49,16 @@ def send_mail_code(to: str):
 @router.post('/account/signup/', name='注册')
 def signup(user: user.UserCreate):
     '''注册'''
-    [email, phone, password1] = map(user.dict().get, ['email', 'phone', 'password1'])
+    signup_count = int(redis.hget('sys:conf', 'signup_count'))
+    [email, phone, password1, nickname] = map(user.dict().get, ['email', 'phone', 'password1', 'nickname'])
     encrypt_passwd = generate_password_hash(password1)
     insert_data = {
+        'nickname': nickname,
         'email': email,
         'phone': phone,
         'password': encrypt_passwd,
         'group': 0,  # 0: 普通用户，1: 管理员
+        'query_count': signup_count,
     }
     _id = db.user.insert(insert_data)
     ctx = {'email': email, 'phone': phone, 'id': str(_id)}
