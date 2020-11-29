@@ -4,6 +4,7 @@
 
 
 import json
+from datetime import datetime
 
 from fastapi import APIRouter, Depends
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -23,14 +24,14 @@ router = APIRouter()
 @router.post("/account/login/", name='登录')
 def login(user: user.UserSignin):
     '''登录'''
-    [email, phone] = map(user.dict().get, ['email', 'phone'])
-    user = db.user.find_one({'$or': [{'email': email}, {'phone': phone}]})
+    email = user.dict().get('email')
+    user = db.user.find_one({'email': email})
     try:
         token = tools.new_token(20)
         uid = str(user['_id'])
         redis.set(token, uid)
         return response_code.resp_200(
-            {'token': token, 'email': email, 'phone': phone, 'id': uid}
+            {'token': token, 'email': email, 'id': uid}
         )
     except Exception:
         return response_code.resp_401()
@@ -50,18 +51,18 @@ def send_mail_code(to: str):
 def signup(user: user.UserCreate):
     '''注册'''
     signup_count = int(redis.hget('sys:conf', 'signup_count'))
-    [email, phone, password1, nickname] = map(user.dict().get, ['email', 'phone', 'password1', 'nickname'])
+    [email, password1, nickname] = map(user.dict().get, ['email', 'password1', 'nickname'])
     encrypt_passwd = generate_password_hash(password1)
     insert_data = {
         'nickname': nickname,
         'email': email,
-        'phone': phone,
         'password': encrypt_passwd,
         'group': 0,  # 0: 普通用户，1: 管理员
         'query_count': signup_count,
+        'created_at': datetime.now(),
     }
     _id = db.user.insert(insert_data)
-    ctx = {'email': email, 'phone': phone, 'id': str(_id)}
+    ctx = {'email': email, 'id': str(_id)}
     return response_code.resp_200(ctx)
 
 

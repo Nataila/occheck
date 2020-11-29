@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 
 from typing import Optional
 
@@ -12,7 +13,6 @@ from core.config import settings
 # Shared properties
 class UserBase(BaseModel):
     email: Optional[EmailStr] = None
-    phone: str = None
     is_active: Optional[bool] = True
     is_superuser: bool = False
     full_name: Optional[str] = None
@@ -20,16 +20,13 @@ class UserBase(BaseModel):
 
 class UserSignin(BaseModel):
     email: Optional[EmailStr] = None
-    phone: str = None
     password: str
 
     @validator('password')
     def user_is_valid(cls, password, values):
-        [email, phone] = map(values.get, ['email', 'phone'])
+        email = values.get('email')
         if email:
             user = db.user.find_one({'email': email})
-        else:
-            user = db.user.find_one({'phone': phone})
         if not user:
             raise ValueError('账户或密码错误')
         pwhash = user['password']
@@ -42,7 +39,6 @@ class UserSignin(BaseModel):
 # Properties to receive via API on creation
 class UserCreate(BaseModel):
     email: Optional[EmailStr] = None
-    phone: str = None
     code: str
     nickname: str
     password1: str
@@ -63,24 +59,11 @@ class UserCreate(BaseModel):
             raise ValueError('该用户已存在')
         return email
 
-    @validator('phone')
-    def email_or_phone_exists(cls, phone, values, **kwargs):
-        email = values.get('email')
-        is_exists = db.user.find({'phone': phone}).count()
-        if phone and is_exists:
-            raise ValueError('该用户已存在')
-        if email and phone:
-            raise ValueError('邮箱和手机只能选一')
-        if phone:
-            reg = "1[3|4|5|7|8][0-9]{9}"
-            if not re.findall(reg, phone):
-                raise ValueError('手机号格式不正确')
-        return phone
 
     @validator('code')
     def valid_code(cls, code, values):
-        [email, phone] = map(values.get, ['email', 'phone'])
-        flag = email or phone
+        email = values.get('email')
+        flag = email
         redis_code = redis.get(f'{settings.CODE_KEY}{flag}')
         if redis_code != code:
             raise ValueError('验证码不正确')
