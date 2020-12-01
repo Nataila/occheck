@@ -28,12 +28,11 @@ def new_task(task: task.NewTask, user: dict = Depends(depends.token_is_true)):
     task = task.dict()
     task.update({
         # 状态:
-        # 0 未付款
-        # 1 已付款
-        # 2 已上传结果文件
-        # 3 已生成评分PDF
-        # 4 已合并PDF
-        # 5 已发送邮件
+        # 0 已上传查询文件
+        # 1 已上传结果文件
+        # 2 已生成评分PDF
+        # 3 已合并PDF
+        # 4 已发送邮件
         'status': 0,
         'created_at': datetime.now(),
         'uid': user['_id'],

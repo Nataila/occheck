@@ -22,7 +22,7 @@ async def token_is_true(token: str = Header(..., description="token验证")):
 
 
 async def is_superuser(user: dict = Depends(token_is_true)):
-    if not user.group == 1:
+    if not user['group'] == 1:
         raise HTTPException(
             status_code=403, detail="Authentication failed",
         )
