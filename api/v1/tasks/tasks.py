@@ -23,6 +23,8 @@ router = APIRouter()
 
 @router.post('/tasks/new/', name = '添加任务')
 def new_task(task: task.NewTask, user: dict = Depends(depends.token_is_true)):
+    if user['query_count'] <= 0:
+        return response_code.resp_200('查询次数不足', message="failed")
     task = task.dict()
     task.update({
         # 状态:
@@ -37,6 +39,7 @@ def new_task(task: task.NewTask, user: dict = Depends(depends.token_is_true)):
         'uid': user['_id'],
     })
     doc = db.tasks.insert(task)
+    db.user.update({'_id': user['_id']}, {'$inc': {'query_count': -1}})
     return response_code.resp_200('ok')
 
 
