@@ -113,3 +113,13 @@ class ForgetPwd(BaseModel):
         if pwd2 != values.get('new_password1'):
             raise ValueError('两次密码不一致')
         return pwd2
+
+
+class BuyItem(BaseModel):
+    count: int
+
+    @validator('count')
+    def valid_count(cls, count):
+        if count == 0:
+            raise ValueError('不能为0')
+        return count

@@ -105,6 +105,23 @@ def user_detail(user: dict = Depends(depends.token_is_true)):
     return response_code.resp_200(user)
 
 
-@router.post('/account/{uid}/', name='更改用户组')
+@router.post('/account/buy/', name='购买查询次数')
+def account_buy(buyitem: user.BuyItem, user: dict = Depends(depends.token_is_true)):
+    count = buyitem.count
+    price = int(redis.hget('sys:conf', 'price'))
+    total_price = count * price
+    spec = {
+        'count': count,
+        'unit_price': price,
+        'total': total_price,
+        # 0:未付款 1:付款中 2: 已付款 3:付款失败
+        'status': 0,
+        'created_at': datetime.now(),
+    }
+    # TODO 是否使用微信支付，返回微信的二维码链接
+    db.financial.insert(spec)
+    return response_code.resp_200('ok')
+
+@router.post('/account/group/{uid}/', name='更改用户组')
 def user_modify_group(user: dict = Depends(depends.is_superuser)):
     return response_code.resp_200('ok')
