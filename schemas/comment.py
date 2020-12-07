@@ -10,4 +10,6 @@ from pydantic import BaseModel
 from typing import Optional
 
 class AddComment(BaseModel):
+    name: str
     content: str
+    location: str
