@@ -16,5 +16,8 @@ fastapi + MongoDB + pydantic + rq + uvicorn
 ### crontab任务
 `python crontab/tasks.py`
 
+### 全局依赖
+wkhtmltopdf==0.12.3
+
 # 部署
 **todo**
