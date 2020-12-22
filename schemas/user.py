@@ -39,14 +39,14 @@ class UserSignin(BaseModel):
 # Properties to receive via API on creation
 class UserCreate(BaseModel):
     email: Optional[EmailStr] = None
-    code: str
-    nickname: str
-    password1: str
-    password2: str
+    # code: str
+    # nickname: str
+    password: str
+    # password2: str
 
-    @validator('password2')
+    @validator('password')
     def passwords_match(cls, v, values, **kwargs):
-        if 'password1' in values and v != values['password1']:
+        if 'password' in values and v != values['password']:
             raise ValueError('两次密码不一致')
         return v
 
@@ -60,14 +60,14 @@ class UserCreate(BaseModel):
         return email
 
 
-    @validator('code')
-    def valid_code(cls, code, values):
-        email = values.get('email')
-        flag = email
-        redis_code = redis.get(f'{settings.CODE_KEY}{flag}')
-        if redis_code != code:
-            raise ValueError('验证码不正确')
-        return code
+    # @validator('code')
+    # def valid_code(cls, code, values):
+    #     email = values.get('email')
+    #     flag = email
+    #     redis_code = redis.get(f'{settings.CODE_KEY}{flag}')
+    #     if redis_code != code:
+    #         raise ValueError('验证码不正确')
+    #     return code
 
 
 # Properties to receive via API on update

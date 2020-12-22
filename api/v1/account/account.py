@@ -21,8 +21,8 @@ from extensions import logger
 router = APIRouter()
 
 
-@router.post("/account/login/", name='登录')
-def login(user: user.UserSignin):
+@router.post("/account/signin/", name='登录')
+def signin(user: user.UserSignin):
     '''登录'''
     email = user.dict().get('email')
     user = db.user.find_one({'email': email})
@@ -31,7 +31,7 @@ def login(user: user.UserSignin):
         uid = str(user['_id'])
         redis.set(token, uid)
         return response_code.resp_200(
-            {'token': token, 'email': email, 'id': uid}
+            {'token': token, 'email': email, 'id': uid, 'country': '美国'}
         )
     except Exception:
         return response_code.resp_401()
@@ -51,10 +51,9 @@ def send_mail_code(to: str):
 def signup(user: user.UserCreate):
     '''注册'''
     signup_count = int(redis.hget('sys:conf', 'signup_count'))
-    [email, password1, nickname] = map(user.dict().get, ['email', 'password1', 'nickname'])
-    encrypt_passwd = generate_password_hash(password1)
+    [email, password] = map(user.dict().get, ['email', 'password'])
+    encrypt_passwd = generate_password_hash(password)
     insert_data = {
-        'nickname': nickname,
         'email': email,
         'password': encrypt_passwd,
         'group': 0,  # 0: 普通用户，1: 管理员

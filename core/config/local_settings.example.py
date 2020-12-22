@@ -20,6 +20,8 @@ class Settings(mainSettings):
         'port': 27017,
     }
 
+    MONGODB_DB = 'fastapi'
+
     # redis配置
     REDIS = {
         'host': '127.0.0.1',
