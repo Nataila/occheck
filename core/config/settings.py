@@ -57,5 +57,7 @@ class Settings(BaseSettings):
         'decode_responses': True,
     }
 
+    UPLOAD_DIR = os.path.join(BASE_DIR, 'uploads')
+
 
 settings = Settings()
