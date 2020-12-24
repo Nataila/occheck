@@ -7,6 +7,7 @@ import os
 import time
 import json
 from datetime import datetime
+import pymongo
 
 from fastapi import APIRouter, Depends, File, UploadFile
 from bson import json_util, ObjectId
@@ -56,7 +57,7 @@ def task_list(
         spec['uid'] = ObjectId(user['_id'])
     if status is not None:
         spec['status'] = status
-    data = db.tasks.find(spec).skip(skip).limit(limit)
+    data = db.tasks.find(spec).sort('created_at', pymongo.DESCENDING).skip(skip).limit(limit)
     res_data = []
     for item in data:
         month = item['created_at'].strftime('%B')
