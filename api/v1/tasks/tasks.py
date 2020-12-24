@@ -9,7 +9,7 @@ import json
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, File, UploadFile
-from bson import json_util
+from bson import json_util, ObjectId
 
 from utils import response_code, depends
 from utils.database import db
@@ -53,12 +53,25 @@ def task_list(
 ):
     spec = {}
     if user['group'] == 0:
-        spec['uid'] = user['_id']
+        spec['uid'] = ObjectId(user['_id'])
     if status is not None:
         spec['status'] = status
     data = db.tasks.find(spec).skip(skip).limit(limit)
-    data = json.loads(json_util.dumps(data))
-    return response_code.resp_200(data)
+    res_data = []
+    for item in data:
+        month = item['created_at'].strftime('%B')
+        day = item['created_at'].strftime('%d')
+        fids = [ObjectId(fid) for fid in item['file_path']]
+        files = db.files.find({'_id': {'$in': fids}})
+        file_names = ', '.join([f['old_name'] for f in files])
+        res_data.append({
+            'id': str(item['_id']),
+            'month': month,
+            'day': day,
+            'status': item['status'],
+            'files': file_names,
+        })
+    return response_code.resp_200(res_data)
 
 
 @router.post("/tasks/upload/")
