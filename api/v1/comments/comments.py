@@ -9,6 +9,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Header
 from bson import json_util, ObjectId
 from typing import Optional
+import pymongo
 
 from schemas import comment
 from utils.database import db, redis
@@ -37,6 +38,6 @@ def comment_list(skip: int = 0, limit: int = 50, token: Optional[str] = Header(N
         user = db.user.find_one({'_id': ObjectId(uid)})
         if user['group'] == 1:
             spec['status'] = 0
-    data = db.comments.find(spec).skip(skip).limit(limit)
+    data = db.comments.find(spec).sort('created_at', pymongo.DESCENDING).skip(skip).limit(limit)
     data = json.loads(json_util.dumps(data))
     return response_code.resp_200(data)

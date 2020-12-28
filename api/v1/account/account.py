@@ -31,7 +31,7 @@ def signin(user: user.UserSignin):
         uid = str(user['_id'])
         redis.set(token, uid)
         return response_code.resp_200(
-            {'token': token, 'email': email, 'id': uid, 'country': '美国'}
+            {'token': token, 'email': email, 'id': uid, 'country': '美国', 'count': user['query_count']}
         )
     except Exception:
         return response_code.resp_401()
