@@ -31,7 +31,7 @@ def signin(user: user.UserSignin):
         uid = str(user['_id'])
         redis.set(token, uid)
         return response_code.resp_200(
-            {'token': token, 'email': email, 'id': uid, 'country': '美国', 'count': user['query_count']}
+            {'token': token, 'email': email, 'id': uid, 'country': '美国', 'count': user['query_count'], 'group': user['group']}
         )
     except Exception:
         return response_code.resp_401()
@@ -51,12 +51,13 @@ def send_mail_code(to: str):
 def signup(user: user.UserCreate):
     '''注册'''
     signup_count = int(redis.hget('sys:conf', 'signup_count'))
-    [email, password] = map(user.dict().get, ['email', 'password'])
+    [email, password, country] = map(user.dict().get, ['email', 'password', 'country'])
     encrypt_passwd = generate_password_hash(password)
     insert_data = {
         'email': email,
         'password': encrypt_passwd,
         'group': 0,  # 0: 普通用户，1: 管理员
+        'country': country, # 0: 美国，1: 英国，2: 澳洲，3: 加拿大
         'query_count': signup_count,
         'created_at': datetime.now(),
     }
@@ -119,7 +120,12 @@ def account_buy(buyitem: user.BuyItem, user: dict = Depends(depends.token_is_tru
     }
     # TODO 是否使用微信支付，返回微信的二维码链接
     db.financial.insert(spec)
-    return response_code.resp_200('ok')
+    qrcode_url = 'alsdjf;aslkdfj'
+    ctx = {
+        'qrcode': qrcode_url,
+        'price': total_price,
+    }
+    return response_code.resp_200(ctx)
 
 @router.post('/account/group/{uid}/', name='更改用户组')
 def user_modify_group(user: dict = Depends(depends.is_superuser)):

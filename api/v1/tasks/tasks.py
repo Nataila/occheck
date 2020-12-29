@@ -67,6 +67,7 @@ def task_list(
         file_names = ', '.join([f['old_name'] for f in files])
         res_data.append({
             'id': str(item['_id']),
+            'key': str(item['_id']),
             'month': month,
             'day': day,
             'status': item['status'],

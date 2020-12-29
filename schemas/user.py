@@ -42,6 +42,7 @@ class UserCreate(BaseModel):
     # code: str
     # nickname: str
     password: str
+    country: int
     # password2: str
 
     @validator('password')

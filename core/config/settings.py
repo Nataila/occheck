@@ -59,5 +59,16 @@ class Settings(BaseSettings):
 
     UPLOAD_DIR = os.path.join(BASE_DIR, 'uploads')
 
+    WX_PAY = {
+        'app_id': '1574578471',
+    }
+
+    WX_PAY = {
+        'app_id': 'wx8d57de0b259956ae',
+        'mch_id': '1574578471',
+        'mch_key': '8c63cfdea764bab44e418d0ce4dd2d37',
+        'notify_url': 'nataila.cn'
+    }
+
 
 settings = Settings()
