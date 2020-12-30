@@ -9,8 +9,9 @@ import json
 from datetime import datetime
 import pymongo
 
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, UploadFile, Form
 from bson import json_util, ObjectId
+from starlette.responses import FileResponse
 
 from utils import response_code, depends
 from utils.database import db
@@ -38,12 +39,29 @@ def new_task(task: task.NewTask, user: dict = Depends(depends.token_is_true)):
             'status': 0,
             'created_at': datetime.now(),
             'uid': user['_id'],
+            'username': user['email'],
         }
     )
     db.tasks.insert(task)
     db.user.update({'_id': user['_id']}, {'$inc': {'query_count': -1}})
     return response_code.resp_200('ok')
 
+@router.get('/tasks/detail/{fid}/', name='任务详情')
+def task_detail(fid: str, user: dict=Depends(depends.is_superuser)):
+    data = db.tasks.find_one({'_id': ObjectId(fid)})
+    data = json.loads(json_util.dumps(data))
+    return response_code.resp_200(data)
+
+@router.post('/tasks/update/', name='修改任务')
+def task_update(item: task.UpdateItem,  user: dict=Depends(depends.is_superuser)):
+    task = item.dict()
+    task['program'] = ObjectId(task['program'])
+    task['repeat'] = ObjectId(task['repeat'])
+    task['status'] = 1
+    tid = task.pop('tid')
+    res = db.tasks.find_one_and_update({'_id': ObjectId(tid)}, {'$set': task})
+    if res:
+        return response_code.resp_200('ok')
 
 @router.get('/tasks/list/', name='任务列表')
 def task_list(
@@ -64,12 +82,13 @@ def task_list(
         day = item['created_at'].strftime('%d')
         fids = [ObjectId(fid) for fid in item['file_path']]
         files = db.files.find({'_id': {'$in': fids}})
-        file_names = ', '.join([f['old_name'] for f in files])
+        file_names = [{'name': f['old_name'], 'fid': str(f['_id'])} for f in files]
         res_data.append({
             'id': str(item['_id']),
             'key': str(item['_id']),
             'month': month,
             'day': day,
+            'username': item.get('username', ''),
             'status': item['status'],
             'files': file_names,
         })
@@ -78,7 +97,7 @@ def task_list(
 
 @router.post("/tasks/upload/")
 async def file_upload(
-    file: UploadFile = File(...), user: dict = Depends(depends.token_is_true)
+    file: UploadFile = File(...), category: int = Form(...), user: dict = Depends(depends.token_is_true)
 ):
     uid = user['_id']
     f = await file.read()
@@ -94,11 +113,28 @@ async def file_upload(
     _id = db.files.insert(
         {
             'uid': uid,
+            'category': category,  # 0: 查询文件 1: 查重文件 2: 语法文件
             'filename': new_file_name,
             'old_name': file.filename,
             'created_time': datetime.now(),
         }
     )
     return response_code.resp_200(
-        {'filename': file.filename, 'id': str(_id), 'path': f"{uid}/{new_file_name}"}
+        {
+            'filename': file.filename,
+            'id': str(_id),
+            'category': category,
+            'path': f"{uid}/{new_file_name}"
+        }
     )
+
+@router.get("/download/{fid}/")
+def download(fid: str, user: dict = Depends(depends.token_is_true)):
+    if user['group'] != 1:
+        return response_code.resp_401()
+    file = db.files.find_one({'_id': ObjectId(fid)})
+    uid = file['uid']
+    name = file['filename']
+    user_dir = f'{settings.UPLOAD_DIR}/{str(uid)}'
+    file_path = f'{user_dir}/{name}'
+    return FileResponse(file_path, filename=file['old_name'])

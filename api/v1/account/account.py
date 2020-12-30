@@ -119,9 +119,9 @@ def account_buy(buyitem: user.BuyItem, user: dict = Depends(depends.token_is_tru
         'status': 0,
         'created_at': datetime.now(),
     }
-    dbid = db.financial.insert(spec)
     out_trade_no = f'{int(time.time())}{tools.new_token(8)}'
     spec['out_trade_no'] = out_trade_no
+    dbid = db.financial.insert(spec)
     pay_info = wx_pay().unified_order(
         trade_type="NATIVE",
         product_id=str(dbid),

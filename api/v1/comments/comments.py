@@ -22,7 +22,7 @@ def comment_create(comment: comment.AddComment, user: dict = Depends(depends.tok
     comment = comment.dict()
     comment.update({
         # 状态 0 未审核|1 已通过
-        'status': 1,
+        'status': 0,
         'created_at': datetime.now(),
         'uid': user['_id'],
     })
@@ -31,9 +31,9 @@ def comment_create(comment: comment.AddComment, user: dict = Depends(depends.tok
 
 
 @router.get('/comments/list/', name='评价列表')
-def comment_list(skip: int = 0, limit: int = 50, token: Optional[str] = Header(None)):
-    spec = {'status': 1}
-    if token:
+def comment_list(skip: int = 0, limit: int = 50, status: int = 1, token: Optional[str] = Header(None)):
+    spec = {'status': status}
+    if token and status == 0:
         uid = redis.get(token)
         user = db.user.find_one({'_id': ObjectId(uid)})
         if user['group'] == 1:

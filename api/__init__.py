@@ -10,6 +10,7 @@ import traceback
 from datetime import datetime
 
 from fastapi import FastAPI, Request, status
+from fastapi.staticfiles import StaticFiles
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
@@ -40,6 +41,8 @@ def create_app():
         redoc_url=settings.REDOC_URL,
         openapi_tags=tags_metadata,
     )
+
+    app.mount('/api/v1/static', StaticFiles(directory=settings.UPLOAD_DIR), name="static")
 
     app.include_router(
         api_v1,
