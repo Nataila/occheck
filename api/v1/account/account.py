@@ -4,13 +4,14 @@
 
 
 import json
+import time
 from datetime import datetime
 
 from fastapi import APIRouter, Depends
 from werkzeug.security import generate_password_hash, check_password_hash
-from bson import json_util, ObjectId
+from bson import json_util
 
-from utils import response_code, tools, depends
+from utils import response_code, tools, depends, wx_pay
 from utils.database import db, redis
 from utils.mailing import send_code
 
@@ -56,8 +57,8 @@ def signup(user: user.UserCreate):
     insert_data = {
         'email': email,
         'password': encrypt_passwd,
-        'group': 0,  # 0: 普通用户，1: 管理员
-        'country': country, # 0: 美国，1: 英国，2: 澳洲，3: 加拿大
+        'group': 0,  #  0: 普通用户，1: 管理员
+        'country': country,  # 0: 美国，1: 英国，2: 澳洲，3: 加拿大
         'query_count': signup_count,
         'created_at': datetime.now(),
     }
@@ -118,9 +119,20 @@ def account_buy(buyitem: user.BuyItem, user: dict = Depends(depends.token_is_tru
         'status': 0,
         'created_at': datetime.now(),
     }
-    # TODO 是否使用微信支付，返回微信的二维码链接
-    db.financial.insert(spec)
-    qrcode_url = 'alsdjf;aslkdfj'
+    dbid = db.financial.insert(spec)
+    out_trade_no = f'{int(time.time())}{tools.new_token(8)}'
+    spec['out_trade_no'] = out_trade_no
+    pay_info = wx_pay().unified_order(
+        trade_type="NATIVE",
+        product_id=str(dbid),
+        body=f'购买查询次数',
+        out_trade_no=out_trade_no,
+        total_fee=str(int(total_price * 100)),
+        attach='',
+    )
+    spec['nonce_str'] = pay_info['nonce_str']
+    qrcode_url = pay_info['code_url']
+    db.financial.find_and_modify({"_id": dbid}, {'$set': {'nonce_str': pay_info['nonce_str']}})
     ctx = {
         'qrcode': qrcode_url,
         'price': total_price,

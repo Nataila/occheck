@@ -40,6 +40,8 @@ class Settings(BaseSettings):
     # 验证码失效时间 10分钟
     CODE_KEY_EXPIRE = 60 * 10
 
+    SITE_URL = 'occheck.com'
+
     # Mongodb配置
     MONGODB = {
         'host': '127.0.0.1',
@@ -60,14 +62,10 @@ class Settings(BaseSettings):
     UPLOAD_DIR = os.path.join(BASE_DIR, 'uploads')
 
     WX_PAY = {
-        'app_id': '1574578471',
-    }
-
-    WX_PAY = {
-        'app_id': 'wx8d57de0b259956ae',
-        'mch_id': '1574578471',
-        'mch_key': '8c63cfdea764bab44e418d0ce4dd2d37',
-        'notify_url': 'nataila.cn'
+        'app_id': '',
+        'mch_id': '',
+        'mch_key': '',
+        'notify_url': ''
     }
 
 
