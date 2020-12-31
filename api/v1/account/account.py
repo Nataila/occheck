@@ -9,7 +9,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends
 from werkzeug.security import generate_password_hash, check_password_hash
-from bson import json_util
+from bson import json_util, ObjectId
 
 from utils import response_code, tools, depends, wx_pay
 from utils.database import db, redis
@@ -18,6 +18,8 @@ from utils.mailing import send_code
 from schemas import user
 from core.config import settings
 from extensions import logger
+
+from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -98,13 +100,27 @@ def user_list(skip: int = 0, limit: int = 50, user: dict = Depends(depends.is_su
     return response_code.resp_200(data)
 
 
-@router.get('/account/me/', name='用户详情')
-def user_detail(user: dict = Depends(depends.token_is_true)):
+@router.get('/account/me/', name='个人详情')
+def me_detail(user: dict = Depends(depends.token_is_true)):
     user['id'] = str(user['_id'])
     user.pop('_id')
     user.pop('password')
     return response_code.resp_200(user)
 
+@router.get('/account/detail/{uid}/', name='用户详情')
+def user_detail(uid: str, user: dict = Depends(depends.is_superuser)):
+    data = db.user.find_one({'_id': ObjectId(uid)})
+    data = json.loads(json_util.dumps(data))
+    return response_code.resp_200(data)
+
+class AccountUpdate(BaseModel):
+    group: int
+    query_count: int
+
+@router.put('/account/update/{uid}/', name='用户更新')
+def user_update(uid: str, item: AccountUpdate,  user: dict = Depends(depends.is_superuser)):
+    db.user.find_one_and_update({'_id': ObjectId(uid)}, {'$set': item.dict()})
+    return response_code.resp_200('ok')
 
 @router.post('/account/buy/', name='购买查询次数')
 def account_buy(buyitem: user.BuyItem, user: dict = Depends(depends.token_is_true)):
@@ -138,7 +154,3 @@ def account_buy(buyitem: user.BuyItem, user: dict = Depends(depends.token_is_tru
         'price': total_price,
     }
     return response_code.resp_200(ctx)
-
-@router.post('/account/group/{uid}/', name='更改用户组')
-def user_modify_group(user: dict = Depends(depends.is_superuser)):
-    return response_code.resp_200('ok')

@@ -6,7 +6,7 @@
 import json
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, Form
 from bson import json_util, ObjectId
 from typing import Optional
 import pymongo
@@ -14,6 +14,8 @@ import pymongo
 from schemas import comment
 from utils.database import db, redis
 from utils import response_code, depends
+
+from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -41,3 +43,12 @@ def comment_list(skip: int = 0, limit: int = 50, status: int = 1, token: Optiona
     data = db.comments.find(spec).sort('created_at', pymongo.DESCENDING).skip(skip).limit(limit)
     data = json.loads(json_util.dumps(data))
     return response_code.resp_200(data)
+
+
+class CommentUpdateItem(BaseModel):
+    status: int
+
+@router.put('/comments/{cid}/', name='更新评论')
+def comment_update(cid: str, item: CommentUpdateItem, user: dict = Depends(depends.is_superuser)):
+    db.comments.find_one_and_update({'_id': ObjectId(cid)}, {'$set': item.dict()})
+    return response_code.resp_200('ok')
