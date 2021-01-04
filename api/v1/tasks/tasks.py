@@ -58,6 +58,12 @@ def task_update(item: task.UpdateItem,  user: dict=Depends(depends.is_superuser)
     task['program'] = ObjectId(task['program'])
     task['repeat'] = ObjectId(task['repeat'])
     task['status'] = 1
+    # 重复率
+    rs = item.repeatScore
+    # 语法评分
+    score = item.score
+    # 综合得分
+    x = (100 - float(rs)) * float(score)
     tid = task.pop('tid')
     res = db.tasks.find_one_and_update({'_id': ObjectId(tid)}, {'$set': task})
     if res:

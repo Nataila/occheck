@@ -35,6 +35,8 @@ class UserSignin(BaseModel):
             raise ValueError('账户或密码错误')
         return password
 
+class SendMail(BaseModel):
+    email: EmailStr
 
 # Properties to receive via API on creation
 class UserCreate(BaseModel):

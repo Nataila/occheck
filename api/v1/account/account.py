@@ -18,6 +18,7 @@ from utils.mailing import send_code
 from schemas import user
 from core.config import settings
 from extensions import logger
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -41,9 +42,10 @@ def signin(user: user.UserSignin):
 
 
 @router.post('/account/send/mail/code/', name="发送验证码")
-def send_mail_code(to: str):
+def send_mail_code(email: user.SendMail):
     '''发送邮件验证码'''
     code = tools.new_token(3)
+    to = email.email
     logger.info(f'send {code} to {to}')
     redis.set(f'{settings.CODE_KEY}{to}', code, settings.CODE_KEY_EXPIRE)
     send_code(to, code)
@@ -114,11 +116,16 @@ def user_detail(uid: str, user: dict = Depends(depends.is_superuser)):
     return response_code.resp_200(data)
 
 class AccountUpdate(BaseModel):
-    group: int
-    query_count: int
+    group: Optional[int]
+    country: Optional[int]
+    query_count: Optional[int]
 
 @router.put('/account/update/{uid}/', name='用户更新')
 def user_update(uid: str, item: AccountUpdate,  user: dict = Depends(depends.is_superuser)):
+    update_data = item.dict()
+    for i, j in item.dict().items():
+        if j == None:
+            update_data.pop(i)
     db.user.find_one_and_update({'_id': ObjectId(uid)}, {'$set': item.dict()})
     return response_code.resp_200('ok')
 

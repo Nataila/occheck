@@ -9,6 +9,7 @@ from typing import List
 
 class NewTask(BaseModel):
     file_path: List[str]
+    version: int
 
 
 class Category(BaseModel):
@@ -18,5 +19,6 @@ class Category(BaseModel):
 class UpdateItem(BaseModel):
     tid: str
     score: str
+    repeatScore: str
     repeat: str
     program: str
