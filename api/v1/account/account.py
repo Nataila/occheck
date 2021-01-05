@@ -215,6 +215,20 @@ def get_sysconf(user: dict = Depends(depends.token_is_true)):
     conf = redis.hgetall('sys:conf')
     return response_code.resp_200(conf)
 
+
+class SysConfItem(BaseModel):
+    signup_count: str
+    price: str
+    sem_count: str
+
+
+@router.post('/account/sysconf/', name='系统配置设置')
+def get_sysconf(item: SysConfItem, user: dict = Depends(depends.is_superuser)):
+    for i, j in item.items():
+        redis.hset('sys:conf', i, j)
+    return response_code.resp_200('ok')
+
+
 @router.post('/account/buy/check/', name='查询是否支付成功')
 def account_buy_check(
     payload: dict = Body(...), user: dict = Depends(depends.token_is_true)
