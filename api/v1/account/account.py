@@ -96,10 +96,15 @@ def forget_passwd(passwd: user.ForgetPwd):
 
 
 @router.get('/account/list/', name='用户列表')
-def user_list(skip: int = 0, limit: int = 50, user: dict = Depends(depends.is_superuser)):
-    data = list(db.user.find().skip(skip).limit(limit))
+def user_list(skip: int = 0, limit: int = 50, search: str = '', user: dict = Depends(depends.is_superuser)):
+    spec = {}
+    if search:
+        spec['$or'] = [{'email': {'$regex': search}}]
+    data = list(db.user.find(spec).skip(skip).limit(limit))
     data = json.loads(json_util.dumps(data))
-    return response_code.resp_200(data)
+    total = db.user.find().count()
+    ctx = {'data': data, 'total': total}
+    return response_code.resp_200(ctx)
 
 
 @router.get('/account/me/', name='个人详情')
@@ -126,7 +131,7 @@ def user_update(uid: str, item: AccountUpdate,  user: dict = Depends(depends.is_
     for i, j in item.dict().items():
         if j == None:
             update_data.pop(i)
-    db.user.find_one_and_update({'_id': ObjectId(uid)}, {'$set': item.dict()})
+    db.user.find_one_and_update({'_id': ObjectId(uid)}, {'$set': update_data})
     return response_code.resp_200('ok')
 
 @router.post('/account/buy/', name='购买查询次数')

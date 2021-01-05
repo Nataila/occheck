@@ -52,6 +52,21 @@ def task_detail(fid: str, user: dict=Depends(depends.is_superuser)):
     data = json.loads(json_util.dumps(data))
     return response_code.resp_200(data)
 
+def get_level(t, g, x):
+    '''
+    t: 重复率
+    g: 语法评分
+    x: 综合评分
+    '''
+    if t > 20 or g < 80:
+        return 2
+    if x < 65:
+        return 2
+    elif 65 <= x < 85:
+        return 1
+    else:
+        return 0
+
 @router.post('/tasks/update/', name='修改任务')
 def task_update(item: task.UpdateItem,  user: dict=Depends(depends.is_superuser)):
     task = item.dict()
@@ -63,7 +78,12 @@ def task_update(item: task.UpdateItem,  user: dict=Depends(depends.is_superuser)
     # 语法评分
     score = item.score
     # 综合得分
-    x = (100 - float(rs)) * float(score)
+    x = int((100 - float(rs)) * float(score) / 100)
+    # 登机
+    level = get_level(float(rs), float(score), float(x))
+    task['composite'] = x
+    # ['优秀', '合格', '不合格']
+    task['level'] = level
     tid = task.pop('tid')
     res = db.tasks.find_one_and_update({'_id': ObjectId(tid)}, {'$set': task})
     if res:
@@ -74,9 +94,12 @@ def task_list(
     status: int = None,
     skip: int = 0,
     limit: int = 50,
+    search: str = '',
     user: dict = Depends(depends.token_is_true),
 ):
     spec = {}
+    if search:
+        spec['$or'] = [{'username': {'$regex': search}}]
     if user['group'] == 0:
         spec['uid'] = ObjectId(user['_id'])
     if status is not None:
@@ -98,7 +121,11 @@ def task_list(
             'status': item['status'],
             'files': file_names,
         })
-    return response_code.resp_200(res_data)
+        ctx = {
+            'data': res_data,
+            'total': db.tasks.find().count(),
+        }
+    return response_code.resp_200(ctx)
 
 
 @router.post("/tasks/upload/")
