@@ -46,18 +46,20 @@ def new_task(task: task.NewTask, user: dict = Depends(depends.token_is_true)):
     db.user.update({'_id': user['_id']}, {'$inc': {'query_count': -1}})
     return response_code.resp_200('ok')
 
+
 @router.get('/tasks/detail/{fid}/', name='任务详情')
-def task_detail(fid: str, user: dict=Depends(depends.is_superuser)):
+def task_detail(fid: str, user: dict = Depends(depends.is_superuser)):
     data = db.tasks.find_one({'_id': ObjectId(fid)})
     data = json.loads(json_util.dumps(data))
     return response_code.resp_200(data)
 
+
 def get_level(t, g, x):
-    '''
+    """
     t: 重复率
     g: 语法评分
     x: 综合评分
-    '''
+    """
     if t > 20 or g < 80:
         return 2
     if x < 65:
@@ -67,8 +69,9 @@ def get_level(t, g, x):
     else:
         return 0
 
+
 @router.post('/tasks/update/', name='修改任务')
-def task_update(item: task.UpdateItem,  user: dict=Depends(depends.is_superuser)):
+def task_update(item: task.UpdateItem, user: dict = Depends(depends.is_superuser)):
     task = item.dict()
     task['program'] = ObjectId(task['program'])
     task['repeat'] = ObjectId(task['repeat'])
@@ -89,6 +92,7 @@ def task_update(item: task.UpdateItem,  user: dict=Depends(depends.is_superuser)
     if res:
         return response_code.resp_200('ok')
 
+
 @router.get('/tasks/list/', name='任务列表')
 def task_list(
     status: int = None,
@@ -104,7 +108,12 @@ def task_list(
         spec['uid'] = ObjectId(user['_id'])
     if status is not None:
         spec['status'] = status
-    data = db.tasks.find(spec).sort('created_at', pymongo.DESCENDING).skip(skip).limit(limit)
+    data = (
+        db.tasks.find(spec)
+        .sort('created_at', pymongo.DESCENDING)
+        .skip(skip)
+        .limit(limit)
+    )
     res_data = []
     for item in data:
         month = item['created_at'].strftime('%B')
@@ -112,15 +121,17 @@ def task_list(
         fids = [ObjectId(fid) for fid in item['file_path']]
         files = db.files.find({'_id': {'$in': fids}})
         file_names = [{'name': f['old_name'], 'fid': str(f['_id'])} for f in files]
-        res_data.append({
-            'id': str(item['_id']),
-            'key': str(item['_id']),
-            'month': month,
-            'day': day,
-            'username': item.get('username', ''),
-            'status': item['status'],
-            'files': file_names,
-        })
+        res_data.append(
+            {
+                'id': str(item['_id']),
+                'key': str(item['_id']),
+                'month': month,
+                'day': day,
+                'username': item.get('username', ''),
+                'status': item['status'],
+                'files': file_names,
+            }
+        )
     ctx = {
         'data': res_data,
         'total': db.tasks.find().count(),
@@ -130,7 +141,9 @@ def task_list(
 
 @router.post("/tasks/upload/")
 async def file_upload(
-    file: UploadFile = File(...), category: int = Form(...), user: dict = Depends(depends.token_is_true)
+    file: UploadFile = File(...),
+    category: int = Form(...),
+    user: dict = Depends(depends.token_is_true),
 ):
     uid = user['_id']
     f = await file.read()
@@ -157,9 +170,10 @@ async def file_upload(
             'filename': file.filename,
             'id': str(_id),
             'category': category,
-            'path': f"{uid}/{new_file_name}"
+            'path': f"{uid}/{new_file_name}",
         }
     )
+
 
 @router.get("/download/{fid}/")
 def download(fid: str, user: dict = Depends(depends.token_is_true)):

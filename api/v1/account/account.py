@@ -35,7 +35,14 @@ def signin(user: user.UserSignin):
         uid = str(user['_id'])
         redis.set(token, uid)
         return response_code.resp_200(
-            {'token': token, 'email': email, 'id': uid, 'country': '美国', 'count': user['query_count'], 'group': user['group']}
+            {
+                'token': token,
+                'email': email,
+                'id': uid,
+                'country': '美国',
+                'count': user['query_count'],
+                'group': user['group'],
+            }
         )
     except Exception:
         return response_code.resp_401()
@@ -96,7 +103,12 @@ def forget_passwd(passwd: user.ForgetPwd):
 
 
 @router.get('/account/list/', name='用户列表')
-def user_list(skip: int = 0, limit: int = 50, search: str = '', user: dict = Depends(depends.is_superuser)):
+def user_list(
+    skip: int = 0,
+    limit: int = 50,
+    search: str = '',
+    user: dict = Depends(depends.is_superuser),
+):
     spec = {}
     if search:
         spec['$or'] = [{'email': {'$regex': search}}]
@@ -114,25 +126,31 @@ def me_detail(user: dict = Depends(depends.token_is_true)):
     user.pop('password')
     return response_code.resp_200(user)
 
+
 @router.get('/account/detail/{uid}/', name='用户详情')
 def user_detail(uid: str, user: dict = Depends(depends.is_superuser)):
     data = db.user.find_one({'_id': ObjectId(uid)})
     data = json.loads(json_util.dumps(data))
     return response_code.resp_200(data)
 
+
 class AccountUpdate(BaseModel):
     group: Optional[int]
     country: Optional[int]
     query_count: Optional[int]
 
+
 @router.put('/account/update/{uid}/', name='用户更新')
-def user_update(uid: str, item: AccountUpdate,  user: dict = Depends(depends.is_superuser)):
+def user_update(
+    uid: str, item: AccountUpdate, user: dict = Depends(depends.is_superuser)
+):
     update_data = item.dict()
     for i, j in item.dict().items():
         if j == None:
             update_data.pop(i)
     db.user.find_one_and_update({'_id': ObjectId(uid)}, {'$set': update_data})
     return response_code.resp_200('ok')
+
 
 @router.post('/account/buy/', name='购买查询次数')
 def account_buy(buyitem: user.BuyItem, user: dict = Depends(depends.token_is_true)):
@@ -156,18 +174,21 @@ def account_buy(buyitem: user.BuyItem, user: dict = Depends(depends.token_is_tru
         product_id=str(dbid),
         body=f'购买查询次数',
         out_trade_no=out_trade_no,
-        total_fee= '1', # str(int(total_price * 100)),
+        total_fee=str(int(total_price * 100)),
         attach=str(dbid),
     )
     spec['nonce_str'] = pay_info['nonce_str']
     qrcode_url = pay_info['code_url']
-    db.financial.find_and_modify({"_id": dbid}, {'$set': {'nonce_str': pay_info['nonce_str']}})
+    db.financial.find_and_modify(
+        {"_id": dbid}, {'$set': {'nonce_str': pay_info['nonce_str']}}
+    )
     ctx = {
         'qrcode': qrcode_url,
-        'price': '1',  # total_price,
+        'price': total_price,
         'fid': str(dbid),
     }
     return response_code.resp_200(ctx)
+
 
 @router.post('/account/buy/notify/', name='微信支付回调')
 async def account_buy_notify(request: Request):
@@ -179,15 +200,25 @@ async def account_buy_notify(request: Request):
         return wp.reply("验证失败", False)
     otn = data['out_trade_no']
     financial = db.financial.find_one({'_id': ObjectId(dbid)})
-    db.financial.find_one_and_update({'_id': ObjectId(dbid)}, {'$set': {'status': 2, 'transaction_id': data['transaction_id']}})
-    db.user.find_one_and_update({'_id': financial['uid']}, {'$inc': {'query_count': financial['count']}})
+    db.financial.find_one_and_update(
+        {'_id': ObjectId(dbid)},
+        {'$set': {'status': 2, 'transaction_id': data['transaction_id']}},
+    )
+    db.user.find_one_and_update(
+        {'_id': financial['uid']}, {'$inc': {'query_count': financial['count']}}
+    )
     return wp.reply("OK", True)
 
-class FidItem(BaseModel):
-    fid: str
+
+@router.get('/account/sysconf/', name='系统配置')
+def get_sysconf(user: dict = Depends(depends.token_is_true)):
+    conf = redis.hgetall('sys:conf')
+    return response_code.resp_200(conf)
 
 @router.post('/account/buy/check/', name='查询是否支付成功')
-def account_buy_check(payload: dict = Body(...), user: dict = Depends(depends.token_is_true)):
+def account_buy_check(
+    payload: dict = Body(...), user: dict = Depends(depends.token_is_true)
+):
     fid = payload['fid']
     data = db.financial.find_one({'_id': ObjectId(fid)})
     if data['status'] == 2:
