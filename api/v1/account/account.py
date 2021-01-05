@@ -224,7 +224,7 @@ class SysConfItem(BaseModel):
 
 @router.post('/account/sysconf/', name='系统配置设置')
 def get_sysconf(item: SysConfItem, user: dict = Depends(depends.is_superuser)):
-    for i, j in item.items():
+    for i, j in item.dict().items():
         redis.hset('sys:conf', i, j)
     return response_code.resp_200('ok')
 
