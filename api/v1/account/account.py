@@ -7,7 +7,7 @@ import json
 import time
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Body, Request
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson import json_util, ObjectId
 
@@ -140,6 +140,7 @@ def account_buy(buyitem: user.BuyItem, user: dict = Depends(depends.token_is_tru
     price = int(redis.hget('sys:conf', 'price'))
     total_price = count * price
     spec = {
+        'uid': user['_id'],
         'count': count,
         'unit_price': price,
         'total': total_price,
@@ -155,14 +156,40 @@ def account_buy(buyitem: user.BuyItem, user: dict = Depends(depends.token_is_tru
         product_id=str(dbid),
         body=f'购买查询次数',
         out_trade_no=out_trade_no,
-        total_fee=str(int(total_price * 100)),
-        attach='',
+        total_fee= '1', # str(int(total_price * 100)),
+        attach=str(dbid),
     )
     spec['nonce_str'] = pay_info['nonce_str']
     qrcode_url = pay_info['code_url']
     db.financial.find_and_modify({"_id": dbid}, {'$set': {'nonce_str': pay_info['nonce_str']}})
     ctx = {
         'qrcode': qrcode_url,
-        'price': total_price,
+        'price': '1',  # total_price,
+        'fid': str(dbid),
     }
     return response_code.resp_200(ctx)
+
+@router.post('/account/buy/notify/', name='微信支付回调')
+async def account_buy_notify(request: Request):
+    wp = wx_pay()
+    data = await request.body()
+    data = wp.to_dict(data.decode('utf-8'))
+    dbid = data['attach']
+    if not wp.check(data):
+        return wp.reply("验证失败", False)
+    otn = data['out_trade_no']
+    financial = db.financial.find_one({'_id': ObjectId(dbid)})
+    db.financial.find_one_and_update({'_id': ObjectId(dbid)}, {'$set': {'status': 2, 'transaction_id': data['transaction_id']}})
+    db.user.find_one_and_update({'_id': financial['uid']}, {'$inc': {'query_count': financial['count']}})
+    return wp.reply("OK", True)
+
+class FidItem(BaseModel):
+    fid: str
+
+@router.post('/account/buy/check/', name='查询是否支付成功')
+def account_buy_check(payload: dict = Body(...), user: dict = Depends(depends.token_is_true)):
+    fid = payload['fid']
+    data = db.financial.find_one({'_id': ObjectId(fid)})
+    if data['status'] == 2:
+        return response_code.resp_200('ok')
+    return response_code.resp_200('failed')

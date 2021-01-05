@@ -121,10 +121,10 @@ def task_list(
             'status': item['status'],
             'files': file_names,
         })
-        ctx = {
-            'data': res_data,
-            'total': db.tasks.find().count(),
-        }
+    ctx = {
+        'data': res_data,
+        'total': db.tasks.find().count(),
+    }
     return response_code.resp_200(ctx)
 
 
