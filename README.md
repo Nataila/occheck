@@ -21,3 +21,7 @@ wkhtmltopdf==0.12.3
 
 # 部署
 **todo**
+
+# pdfkit乱码问题
+`http://kaito-kidd.com/2015/03/12/python-html2pdf/`
+`sudo apt-get install ttf-wqy-zenhei`

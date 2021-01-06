@@ -16,12 +16,12 @@ with open("result.html", 'w') as fout:
     html_content = template.render(**{'num': 12})
     pdfkit.from_string(html_content, 'out.pdf')
 
-# pdf_files = ('out.pdf', 'chachong.pdf')
-# result_pdf = PdfFileMerger()
-# for pdf in pdf_files:
-#     with open(pdf, 'rb') as fp:
-#         pdf_reader = PdfFileReader(fp)
-#         result_pdf.append(pdf_reader, import_bookmarks=True)
-# 
-# result_pdf.write('result.pdf')
-# result_pdf.close()
+pdf_files = ('out.pdf', 'chachong.pdf')
+result_pdf = PdfFileMerger()
+for pdf in pdf_files:
+    with open(pdf, 'rb') as fp:
+        pdf_reader = PdfFileReader(fp)
+        result_pdf.append(pdf_reader, import_bookmarks=True)
+
+result_pdf.write('result.pdf')
+result_pdf.close()
