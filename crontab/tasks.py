@@ -36,12 +36,15 @@ def score():
         uid = str(i['uid'])
         score_html_path = f'{upload_dir}/{uid}/{tid}_result.html'
         score_out_pdf_path = f'{upload_dir}/{uid}/{tid}_score.pdf'
-        with open(score_html_path, 'w') as fout:
-            html_content = template.render(**{'num': int(i['score'])})
-            fout.write(html_content)
-            # pdfkit.from_string(html_content, score_out_pdf_path)
-        pdfkit.from_file(score_html_path, score_out_pdf_path)
-        # db.tasks.find_one_and_update({'_id': i['_id']}, {'$set': {'status': 2}})
+        html_content = template.render(**{'num': int(i['score'])})
+        pdfkit.from_string(html_content, score_out_pdf_path)
+        # with open(score_html_path, 'w') as fout:
+        #     html_content = template.render(**{'num': int(i['score'])})
+        #     fout.write(html_content)
+        #     # pdfkit.from_string(html_content, score_out_pdf_path)
+        # pdfkit.from_file(score_html_path, score_out_pdf_path)
+        db.tasks.find_one_and_update({'_id': i['_id']}, {'$set': {'status': 2}})
+
 
 def merge_pdf():
     '''合并PDF'''
@@ -61,15 +64,29 @@ def merge_pdf():
 
         pdf_files = (score_out_pdf_path, repeat_file_path, program_file_path)
 
-        last_file = f'{upload_dir}/{uid}/occheck_result_{tid}.pdf'
+        last_file_name = f'occheck_result_{tid}.pdf'
+        last_file_path = f'{upload_dir}/{uid}/{last_file_name}'
 
         result_pdf = PdfFileMerger()
         for pdf in pdf_files:
             with open(pdf, 'rb') as fp:
                 pdf_reader = PdfFileReader(fp)
                 result_pdf.append(pdf_reader, import_bookmarks=False)
-        result_pdf.write(last_file)
+        result_pdf.write(last_file_path)
         result_pdf.close()
+        db.tasks.find_one_and_update({'_id': i['_id']}, {'$set': {'status': 3, 'last_file': last_file_name}})
+
+
+def send_mail():
+    '''发送邮件'''
+    data = db.tasks.find({'status': 3})
+    for i in data:
+        uid = str(i['uid'])
+        file_name = i['last_file']
+        last_file_path = f'{upload_dir}/{uid}/{file_name}'
+        mailing.send_attach(i['username'], last_file_path, file_name)
+        db.tasks.find_one_and_update({'_id': i['_id']}, {'$set': {'status': 4}})
+
 
 def every1m():
     '''每一分钟运行的任务'''
@@ -85,4 +102,4 @@ def every1m():
 
 # score()
 # merge_pdf()
-mailing.send_code('nataila@163.com', '123455')
+send_mail()

@@ -23,6 +23,8 @@ def send_email(
     subject_template: str = "",
     html_template: str = "",
     environment: Dict[str, Any] = {},
+    file_path: str = "",
+    file_name: str = ""
 ) -> None:
 
     assert settings.EMAILS_ENABLED, "no provided configuration for email variables"
@@ -31,6 +33,9 @@ def send_email(
         html=JinjaTemplate(html_template),
         mail_from=(settings.EMAILS_FROM_NAME, settings.EMAILS_FROM_EMAIL),
     )
+    if file_path:
+        print(file_path, file_name)
+        message.attach(data=open(file_path, 'rb'), filename=file_name)
     smtp_options = {"host": settings.SMTP_HOST, "port": settings.SMTP_PORT}
     if settings.SMTP_TLS:
         smtp_options["tls"] = True
@@ -53,4 +58,18 @@ def send_code(email_to: str, code: str) -> None:
         subject_template=subject,
         html_template=template_str,
         environment={"code": code, "email": email_to},
+    )
+
+
+def send_attach(email_to: str, file_path: str, file_name: str) -> None:
+    subject = f'查重结果文件'
+    with open(Path(settings.EMAIL_TEMPLATES_DIR) / "attach.html") as f:
+        template_str = f.read()
+    send_email.delay(
+        email_to=email_to,
+        subject_template=subject,
+        html_template=template_str,
+        environment={},
+        file_path=file_path,
+        file_name=file_name,
     )
