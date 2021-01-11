@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, File, UploadFile, Form
 from bson import json_util, ObjectId
 from starlette.responses import FileResponse
 
-from utils import response_code, depends
+from utils import response_code, depends, sms
 from utils.database import db
 
 from schemas import task
@@ -44,6 +44,7 @@ def new_task(task: task.NewTask, user: dict = Depends(depends.token_is_true)):
     )
     db.tasks.insert(task)
     db.user.update({'_id': user['_id']}, {'$inc': {'query_count': -1}})
+    sms.send_notify()
     return response_code.resp_200('ok')
 
 

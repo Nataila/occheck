@@ -5,13 +5,17 @@
 
 
 import json
+from rq.decorators import job
+from redis import Redis
 
 from aliyunsdkcore.client import AcsClient
 from aliyunsdkcore.request import CommonRequest
 
+from core.config import settings
 
-@job
-def sms(phone, tmp, params):
+
+@job('default', connection=Redis(), timeout=settings.EMAILS_TIMEOUT)
+def sms(phone, tmp, params={}):
     client = AcsClient(
         settings.ALI_SMS['accessKeyId'], settings.ALI_SMS['accessSecret'], 'cn-hangzhou'
     )
@@ -27,9 +31,13 @@ def sms(phone, tmp, params):
 
     request.add_query_param('RegionId', "cn-hangzhou")
     request.add_query_param('PhoneNumbers', phone)
-    request.add_query_param('SignName', "得控飞行基地")
+    request.add_query_param('SignName', "occheck")
     request.add_query_param('TemplateCode', tmp)
     request.add_query_param('TemplateParam', params)
 
     response = client.do_action(request)
     return str(response, encoding='utf-8')
+
+
+def send_notify():
+    sms.delay('18612696910', 'SMS_209171824')
