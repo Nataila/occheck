@@ -23,7 +23,7 @@ MONGODB = {
 client = MongoClient(**MONGODB)
 db = client['occheck']
 
-env = Environment(loader=FileSystemLoader('./'))
+env = Environment(loader=FileSystemLoader('./score_template'))
 template = env.get_template('index.html')
 
 upload_dir = '/opt/occheck/server/uploads'
@@ -36,7 +36,14 @@ def score():
         uid = str(i['uid'])
         score_html_path = f'{upload_dir}/{uid}/{tid}_result.html'
         score_out_pdf_path = f'{upload_dir}/{uid}/{tid}_score.pdf'
-        html_content = template.render(**{'num': int(i['score'])})
+        level_map = ['优秀', '合格', '不合格']
+        data = {
+            'score': i.get('score', 0),
+            'repeatScore': i.get('repeatScore', 0),
+            'composite': i.get('composite', 0),
+            'level': level_map[i.get('level', 0)],
+        }
+        html_content = template.render(**data)
         pdfkit.from_string(html_content, score_out_pdf_path)
         # with open(score_html_path, 'w') as fout:
         #     html_content = template.render(**{'num': int(i['score'])})
@@ -100,6 +107,6 @@ def every1m():
 #
 # scheduler.start()
 
-# score()
+score()
 # merge_pdf()
-send_mail()
+# send_mail()
