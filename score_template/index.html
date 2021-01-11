@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Index</title>
+  <style>
+    body {
+      background: url('./static/img/bg.png');
+    }
+  </style>
+  </head>
+  <body>
+    数字是
+    {% if num > 50 %}
+    <span style="color: red">{{ num}}</span>
+    {% else %}
+    <span style="color: white">{{ num}}</span>
+    {% endif %}
+  </body>
+</html>
