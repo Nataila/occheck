@@ -36,7 +36,7 @@ def resp_200(data: Union[list, dict, str] = None, *, message: str = "Success") -
 def resp_403(data: str = None) -> Response:
     return ORJSONResponse(
         status_code=status.HTTP_403_FORBIDDEN,
-        content={'code': 403, 'message': "Forbidden", 'data': data,},
+        content={"errors": [{"loc": [], "msg": '认证失败', "type": "value_error"}]},
     )
 
 

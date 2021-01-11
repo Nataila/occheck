@@ -142,8 +142,11 @@ class AccountUpdate(BaseModel):
 
 @router.put('/account/update/{uid}/', name='用户更新')
 def user_update(
-    uid: str, item: AccountUpdate, user: dict = Depends(depends.is_superuser)
+    uid: str, item: AccountUpdate, user: dict = Depends(depends.token_is_true)
 ):
+    if user['group'] != 1 and str(user['_id']) != uid:
+        return response_code.resp_403()
+
     update_data = item.dict()
     for i, j in item.dict().items():
         if j == None:
