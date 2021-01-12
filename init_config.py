@@ -19,6 +19,8 @@ def system_config():
         'price': 35,
         # 推广赠送的次数
         'sem_count': 3,
+        # 通知的手机号
+        'phone': '15965347737',
     }
 
     for i, j in conf.items():

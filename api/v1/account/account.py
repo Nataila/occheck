@@ -223,6 +223,7 @@ class SysConfItem(BaseModel):
     signup_count: str
     price: str
     sem_count: str
+    phone: str
 
 
 @router.post('/account/sysconf/', name='系统配置设置')

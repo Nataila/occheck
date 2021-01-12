@@ -1,5 +1,6 @@
 aiocontextvars==0.2.2
 aiofiles==0.6.0
+aliyun-python-sdk-core-v3==2.13.11
 APScheduler==3.6.3
 cachetools==4.1.1
 certifi==2020.11.8
@@ -17,12 +18,14 @@ h11==0.11.0
 idna==2.10
 immutables==0.14
 Jinja2==2.11.2
+jmespath==0.10.0
 loguru==0.5.3
 lxml==4.6.1
 MarkupSafe==1.1.1
 pdfkit==0.6.1
 pkg-resources==0.0.0
 premailer==3.7.0
+pycryptodome==3.9.9
 pydantic==1.7.2
 pymongo==3.11.1
 PyPDF2==1.26.0

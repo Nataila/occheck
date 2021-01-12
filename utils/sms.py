@@ -7,6 +7,7 @@
 import json
 from rq.decorators import job
 from redis import Redis
+from utils.database import redis
 
 from aliyunsdkcore.client import AcsClient
 from aliyunsdkcore.request import CommonRequest
@@ -40,4 +41,5 @@ def sms(phone, tmp, params={}):
 
 
 def send_notify():
-    sms.delay('18612696910', 'SMS_209171824')
+    phone = redis.hget('sys:conf', 'phone')
+    sms.delay(phone, 'SMS_209171824')

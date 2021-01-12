@@ -38,9 +38,9 @@ def score():
         score_out_pdf_path = f'{upload_dir}/{uid}/{tid}_score.pdf'
         level_map = ['优秀', '合格', '不合格']
         data = {
-            'score': i.get('score', 0),
-            'repeatScore': i.get('repeatScore', 0),
-            'composite': i.get('composite', 0),
+            'score': int(i.get('score', 0)),
+            'repeatScore': int(i.get('repeatScore', 0)),
+            'composite': int(i.get('composite', 0)),
             'level': level_map[i.get('level', 0)],
         }
         html_content = template.render(**data)
@@ -99,14 +99,15 @@ def every1m():
     '''每一分钟运行的任务'''
     score()
     merge_pdf()
+    send_mail()
 
-# scheduler = BlockingScheduler()
-#
-# # 每隔 1分钟 运行
-# scheduler.add_job(every1m, 'interval', minutes=1)
-#
-# scheduler.start()
+scheduler = BlockingScheduler()
 
-score()
+# 每隔 1分钟 运行
+scheduler.add_job(every1m, 'interval', minutes=1)
+
+scheduler.start()
+
+# score()
 # merge_pdf()
 # send_mail()
