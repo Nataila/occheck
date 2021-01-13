@@ -181,7 +181,7 @@ async def file_upload(
     )
 
 
-@router.get("/download/{fid}/")
+@router.get("/download/{fid}/", name='文件下载')
 def download(fid: str, user: dict = Depends(depends.token_is_true)):
     if user['group'] != 1:
         return response_code.resp_401()
@@ -191,3 +191,10 @@ def download(fid: str, user: dict = Depends(depends.token_is_true)):
     user_dir = f'{settings.UPLOAD_DIR}/{str(uid)}'
     file_path = f'{user_dir}/{name}'
     return FileResponse(file_path, filename=file['old_name'])
+
+
+@router.get("/result/download/{uid}/{fid}/", name="结果文件下载")
+def result_download(uid: str, fid: str):
+    user_dir = f'{settings.UPLOAD_DIR}/{str(uid)}'
+    file_path = f'{user_dir}/occheck_result_{fid}.pdf'
+    return FileResponse(file_path, filename=f'occheck查询结果_{fid}.pdf')

@@ -89,9 +89,10 @@ def send_mail():
     data = db.tasks.find({'status': 3})
     for i in data:
         uid = str(i['uid'])
-        file_name = i['last_file']
-        last_file_path = f'{upload_dir}/{uid}/{file_name}'
-        mailing.send_attach(i['username'], last_file_path, file_name)
+        tid = str(i['_id'])
+        # file_name = i['last_file']
+        # last_file_path = f'{upload_dir}/{uid}/{file_name}'
+        mailing.send_attach(i['username'], uid, tid)
         db.tasks.find_one_and_update({'_id': i['_id']}, {'$set': {'status': 4}})
 
 

@@ -17,7 +17,6 @@ from emails.template import JinjaTemplate
 from core.config import settings
 
 
-@job('default', connection=Redis(), timeout=settings.EMAILS_TIMEOUT)
 def send_email(
     email_to: str,
     subject_template: str = "",
@@ -34,7 +33,6 @@ def send_email(
         mail_from=(settings.EMAILS_FROM_NAME, settings.EMAILS_FROM_EMAIL),
     )
     if file_path:
-        print(file_path, file_name)
         message.attach(data=open(file_path, 'rb'), filename=file_name)
     smtp_options = {"host": settings.SMTP_HOST, "port": settings.SMTP_PORT}
     if settings.SMTP_TLS:
@@ -46,6 +44,7 @@ def send_email(
     if settings.SMTP_PASSWORD:
         smtp_options["password"] = settings.SMTP_PASSWORD
     response = message.send(to=email_to, render=environment, smtp=smtp_options)
+    print(response)
     logging.info(f"send email result: {response}")
 
 
@@ -53,7 +52,7 @@ def send_code(email_to: str, code: str) -> None:
     subject = f"occheck验证码"
     with open(Path(settings.EMAIL_TEMPLATES_DIR) / "code.html") as f:
         template_str = f.read()
-    send_email.delay(
+    send_email(
         email_to=email_to,
         subject_template=subject,
         html_template=template_str,
@@ -61,15 +60,14 @@ def send_code(email_to: str, code: str) -> None:
     )
 
 
-def send_attach(email_to: str, file_path: str, file_name: str) -> None:
+def send_attach(email_to: str, uid: str, tid: str) -> None:
     subject = f'查重结果文件'
     with open(Path(settings.EMAIL_TEMPLATES_DIR) / "attach.html") as f:
         template_str = f.read()
-    send_email.delay(
+    link = f'{settings.SITE_URL}/api/v1/result/download/{uid}/{tid}/'
+    send_email(
         email_to=email_to,
         subject_template=subject,
         html_template=template_str,
-        environment={},
-        file_path=file_path,
-        file_name=file_name,
+        environment={'link': link},
     )
