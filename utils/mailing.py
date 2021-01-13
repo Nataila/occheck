@@ -17,6 +17,7 @@ from emails.template import JinjaTemplate
 from core.config import settings
 
 
+@job('default', connection=Redis(), timeout=settings.EMAILS_TIMEOUT)
 def send_email(
     email_to: str,
     subject_template: str = "",
@@ -52,7 +53,7 @@ def send_code(email_to: str, code: str) -> None:
     subject = f"occheck验证码"
     with open(Path(settings.EMAIL_TEMPLATES_DIR) / "code.html") as f:
         template_str = f.read()
-    send_email(
+    send_email.delay(
         email_to=email_to,
         subject_template=subject,
         html_template=template_str,
@@ -65,7 +66,7 @@ def send_attach(email_to: str, uid: str, tid: str) -> None:
     with open(Path(settings.EMAIL_TEMPLATES_DIR) / "attach.html") as f:
         template_str = f.read()
     link = f'{settings.SITE_URL}/api/v1/result/download/{uid}/{tid}/'
-    send_email(
+    send_email.delay(
         email_to=email_to,
         subject_template=subject,
         html_template=template_str,

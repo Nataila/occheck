@@ -26,7 +26,7 @@ db = client['occheck']
 env = Environment(loader=FileSystemLoader('./score_template'))
 template = env.get_template('index.html')
 
-upload_dir = '/opt/occheck/server/uploads'
+upload_dir = '/data/occheck/server/uploads'
 
 def score():
     '''评分html to pdf'''
