@@ -149,9 +149,12 @@ def task_list(
 async def file_upload(
     file: UploadFile = File(...),
     category: int = Form(...),
+    tuid: str = Form(...),
     user: dict = Depends(depends.token_is_true),
 ):
     uid = user['_id']
+    if category != 0 and user['group'] == 1:
+        uid = ObjectId(tuid)
     f = await file.read()
     ext = os.path.splitext(file.filename)[-1]
     user_dir = f'{settings.UPLOAD_DIR}/{str(uid)}'

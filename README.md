@@ -25,3 +25,6 @@ wkhtmltopdf==0.12.3
 # pdfkit乱码问题
 `http://kaito-kidd.com/2015/03/12/python-html2pdf/`
 `sudo apt-get install ttf-wqy-zenhei`
+
+# wkhtmltopdf
+`export QT_QPA_PLATFORM='offscreen'`
