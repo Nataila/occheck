@@ -125,6 +125,7 @@ def task_list(
         res_data.append(
             {
                 'id': str(item['_id']),
+                'uid': str(item['uid']),
                 'key': str(item['_id']),
                 'month': month,
                 'version': item['version'],
@@ -136,6 +137,7 @@ def task_list(
                 'username': item.get('username', ''),
                 'status': item['status'],
                 'files': file_names,
+                'last_file': item.get('last_file', ''),
             }
         )
     ctx = {
