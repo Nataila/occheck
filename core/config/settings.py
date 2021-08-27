@@ -69,8 +69,8 @@ class Settings(BaseSettings):
     }
 
     ALI_SMS = {
-        'accessKeyId': 'LTAI4G5PN5fiz4SwMYtXxh84',
-        'accessSecret': 'IbuPNQnbysiMHywmS9LYdTWJjoHaRR',
+        'accessKeyId': '',
+        'accessSecret': '',
     }
 
 
